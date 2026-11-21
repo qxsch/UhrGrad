@@ -84,6 +84,13 @@ header p, .sub { margin: 0; color: var(--cp-text-muted); }
 #dial { position: relative; width: 100%; aspect-ratio: 1; touch-action: none; user-select: none; }
 #dial > svg { position: absolute; inset: 0; width: 100%; height: 100%; background: none !important; pointer-events: none; }
 .face-number { fill: var(--cp-text); font-size: 23px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+[hidden] { display: none !important; }
+.scale-band { stroke: var(--cp-bg-elevated); }
+.scale-edge { stroke: var(--cp-text-muted); stroke-width: .65; fill: none; }
+#scale-labels { text-anchor: middle; dominant-baseline: central; font: 600 8px Consolas, "Courier New", monospace; fill: var(--cp-text); }
+#scale-labels .inner-scale { fill: var(--cp-text-muted); }
+.scale-zero { stroke: var(--cp-text); stroke-width: 1; fill: var(--cp-text); }
+.hand-guides { stroke: var(--cp-text); stroke-width: 1; stroke-dasharray: 1.5 2.5; fill: none; }
 .cw { color: var(--cp-accent); } .ccw { color: var(--cp-link); }
 .hint { gap: 6px; color: var(--cp-text-muted); font-size: 13px; padding: 2px 9px; background: var(--cp-bg-elevated); }
 .icon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
@@ -107,7 +114,12 @@ select { width: 100%; height: 46px; padding: 0 10px; border: 1px solid var(--cp-
 .preset:hover { border-color: var(--cp-border-strong); background: var(--cp-surface-soft); }
 .preset[aria-pressed="true"] { color: var(--cp-accent); background: var(--cp-accent-soft); border-color: var(--cp-accent); font-weight: 700; }
 .dial-key h2 { font-size: 18px; margin-bottom: 12px; }
-.key-row { gap: 10px; margin: 6px 0; }
+.tool-option { display: flex; align-items: center; gap: 8px; min-height: 32px; font-size: 15px; }
+.tool-option input, .fine-rotation input { accent-color: var(--cp-accent); }
+.tool-option input { width: 17px; height: 17px; margin: 0; }
+.fine-rotation { display: grid; margin-top: 12px; gap: 4px; font-size: 13px; }
+.hand-key { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.key-row { gap: 8px; white-space: nowrap; }
 .swatch { display: flex; width: 34px; justify-content: center; }
 .swatch i { display: block; width: 20px; height: 5px; border-radius: 3px; background: var(--cp-text); }
 .swatch.minute i { width: 30px; height: 2px; }

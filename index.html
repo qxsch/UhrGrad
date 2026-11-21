@@ -48,12 +48,22 @@
                 <g class="cw"><path id="cw-arc" stroke="currentColor" fill="none"/><path id="cw-tip" fill="currentColor"/></g>
                 <g class="ccw"><path id="ccw-arc" stroke="currentColor" fill="none"/><path id="ccw-tip" fill="currentColor"/></g>
               </g>
+              <g id="protractor-plane" hidden>
+                <g id="protractor-ring">
+                  <circle class="scale-band" r="163" stroke-width="34" fill="none"/>
+                  <circle class="scale-edge" r="180"/><circle class="scale-edge" r="146"/>
+                  <path id="scale-ticks" class="scale-edge"/>
+                  <g id="scale-labels"></g>
+                  <path class="scale-zero" d="M0,-8 V-146 M-3,-146 L0,-153 L3,-146Z"/>
+                </g>
+                <path id="hand-guides" class="hand-guides"/>
+              </g>
               <g id="hub-plane"><circle r="9" fill="var(--cp-text)"/><circle r="3" fill="var(--cp-surface)"/></g>
             </svg>
           </div>
           <div class="hint"><svg aria-hidden="true" class="icon" viewBox="0 0 24 24"><path d="m5 3 14 10-6 1-2.5 6z"/></svg><span id="drag-hint">Drag either hand near its tip</span></div>
         </div>
-        <div class="readouts">
+        <div class="readouts" id="readouts">
           <div class="readout cw">
             <div id="cw-label" class="readout-label"><svg aria-hidden="true" class="icon" viewBox="0 0 24 24"><path d="M20 10a8 8 0 1 0-2 8M20 4v6h-6"/></svg>Clockwise</div>
             <output id="cw-value" aria-labelledby="cw-label"></output>
@@ -74,11 +84,21 @@
           </div>
           <div class="presets"><div class="tag presets-title">Quick presets</div><div class="preset-grid" id="presets"></div></div>
         </section>
+        <section class="card dial-key" aria-labelledby="tools-title">
+          <h2 id="tools-title">Measurement tools</h2>
+          <label class="tool-option"><input type="checkbox" id="show-answers" checked> Show angle arrows and values</label>
+          <label class="tool-option"><input type="checkbox" id="show-protractor"> Full-circle protractor (360°)</label>
+          <div id="protractor-controls" hidden>
+            <p class="note">Drag the marked rim until <strong>0° lines up with the hour hand</strong>. At the minute hand’s dotted guide, read the outer scale clockwise or the inner scale counterclockwise.</p>
+            <label class="fine-rotation">Fine rotation (½° steps)<input type="range" id="ring-rotation" min="0" max="359.5" step="0.5" value="0"></label>
+          </div>
+        </section>
         <section class="card dial-key" aria-labelledby="key-title">
           <h2 id="key-title">Reading the dial</h2>
-          <div class="key-row"><span class="swatch"><i></i></span>Hour hand</div>
-          <div class="key-row"><span class="swatch minute"><i></i></span>Minute hand</div>
-          <p class="note">Follow each arrow <strong>from the hour hand to the minute hand</strong>. Together the angles make 360°. When the hands overlap, the counterclockwise arrow shows the full turn.</p>
+          <div class="hand-key">
+            <div class="key-row"><span class="swatch"><i></i></span>Hour hand</div>
+            <div class="key-row"><span class="swatch minute"><i></i></span>Minute hand</div>
+          </div>
         </section>
       </aside>
     </div>

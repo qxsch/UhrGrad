@@ -84,6 +84,7 @@
       $(id).setAttribute("transform", `matrix(${u.x} ${u.y} ${v.x} ${v.y} ${o.x} ${o.y})`);
     }
     alignPlane("face-plane", 0);
+    alignPlane("protractor-plane", 0);
     alignPlane("arrow-plane", 0);
     alignPlane("hub-plane", minute.hand.position.z + 1);
     renderer.render(scene, camera);
@@ -111,6 +112,33 @@
   }
 
   const hourSelect = $("hour"), minuteSelect = $("minute");
+  const answers = $("show-answers"), protractor = $("show-protractor"), rotation = $("ring-rotation");
+  const ticks = [];
+  for (let deg = 0; deg < 360; deg++) {
+    const length = deg % 10 === 0 ? 10 : deg % 5 === 0 ? 7 : 4;
+    ticks.push(`M${polar(179 - length, deg)} L${polar(179, deg)}`);
+    if (deg % 10 !== 0) continue;
+    for (const inner of [false, true]) {
+      const text = document.createElementNS(svgNS, "text");
+      text.setAttribute("transform", `rotate(${deg}) translate(0 ${inner ? -152 : -164})`);
+      if (inner) text.setAttribute("class", "inner-scale");
+      text.textContent = inner ? 360 - deg : deg;
+      $("scale-labels").append(text);
+    }
+  }
+  $("scale-ticks").setAttribute("d", ticks.join(" "));
+  function rotateRing(degrees) {
+    const angle = mod(Math.round(degrees * 2) / 2, 360);
+    rotation.value = angle;
+    rotation.setAttribute("aria-valuetext", `${angle} degrees clockwise from twelve`);
+    $("protractor-ring").setAttribute("transform", `rotate(${angle})`);
+  }
+  rotation.addEventListener("input", () => rotateRing(rotation.valueAsNumber));
+  function showProtractor() {
+    $("protractor-plane").toggleAttribute("hidden", !protractor.checked);
+    $("protractor-controls").hidden = !protractor.checked;
+  }
+  protractor.addEventListener("change", showProtractor);
   for (let h = 0; h < 24; h++) hourSelect.add(new Option(pad(h), h));
   for (let m = 0; m < 60; m++) minuteSelect.add(new Option(pad(m), m));
   const presets = [540, 210, 360, 610].map(t => {
@@ -125,6 +153,21 @@
   });
 
   let time;
+  function renderAnswers() {
+    const show = answers.checked;
+    const cw = mod(minute.degrees - hour.degrees, 360), ccw = 360 - cw;
+    for (const id of ["readouts", "arrow-plane", "tints"])
+      $(id).toggleAttribute("hidden", !show);
+    if (show) {
+      drawArc("cw", 49, hour.degrees, cw, 1);
+      drawArc("ccw", 74, hour.degrees, ccw, -1);
+    }
+    $("cw-value").textContent = show ? cw + "\u00b0" : "";
+    $("ccw-value").textContent = show ? ccw + "\u00b0" : "";
+    dial.setAttribute("aria-label", `Clock set to ${formatTime(time)}.` + (show
+      ? ` Hour to minute: ${cw} degrees clockwise, ${ccw} degrees counterclockwise.` : ""));
+  }
+  answers.addEventListener("change", renderAnswers);
   function setTime(value) {
     const next = mod(Math.round(value), 24 * 60);
     if (next === time) return;
@@ -135,16 +178,12 @@
     hour.hand.rotation.z = -hour.degrees * rad;
     minute.hand.rotation.z = -minute.degrees * rad;
     renderer.render(scene, camera);
-    const cw = mod(minute.degrees - hour.degrees, 360);
-    const ccw = 360 - cw;
-    drawArc("cw", 49, hour.degrees, cw, 1);
-    drawArc("ccw", 74, hour.degrees, ccw, -1);
+    $("hand-guides").setAttribute("d", [hour, minute].map(h =>
+      `M${polar(h.length, h.degrees)} L${polar(180, h.degrees)}`).join(" "));
+    renderAnswers();
     hourSelect.value = h;
     minuteSelect.value = m;
     $("digital").textContent = formatTime(time);
-    $("cw-value").textContent = cw + "\u00b0";
-    $("ccw-value").textContent = ccw + "\u00b0";
-    dial.setAttribute("aria-label", `Clock set to ${formatTime(time)}. Hour to minute: ${cw} degrees clockwise, ${ccw} degrees counterclockwise.`);
     for (const { t, btn } of presets) btn.setAttribute("aria-pressed", t === time);
   }
   for (const control of [hourSelect, minuteSelect])
@@ -174,20 +213,30 @@
     return closest;
   }
   let drag = null;
+  function onRing(p) {
+    return protractor.checked && p.radius >= 146 && p.radius <= 182;
+  }
   dial.addEventListener("pointerdown", e => {
     if (drag || e.button !== 0) return;
-    const hand = handAt(e);
-    if (!hand && !angled) return;
+    const p = localPoint(e, 0), ring = onRing(p), hand = handAt(e);
+    if (!ring && !hand && !angled) return;
     e.preventDefault();
-    drag = hand
+    drag = ring
+      ? { id: e.pointerId, ring: true, offset: rotation.valueAsNumber - p.angle }
+      : hand
       ? { id: e.pointerId, hand, previous: localPoint(e, hand.hand.position.z).angle, time }
       : { id: e.pointerId, startX: e.clientX, startY: e.clientY, pitch, yaw };
     dial.setPointerCapture(e.pointerId);
     dial.style.cursor = "grabbing";
   });
   dial.addEventListener("pointermove", e => {
-    if (!drag) { dial.style.cursor = handAt(e) || angled ? "grab" : ""; return; }
+    if (!drag) { dial.style.cursor = angled || handAt(e) || onRing(localPoint(e, 0)) ? "grab" : ""; return; }
     if (drag.id !== e.pointerId) return;
+    if (drag.ring) {
+      const p = localPoint(e, 0);
+      if (p.radius >= 12) rotateRing(p.angle + drag.offset);
+      return;
+    }
     if (!drag.hand) {
       const sensitivity = 100 / dial.clientWidth;
       yaw = Math.max(-55, Math.min(55, drag.yaw - (e.clientX - drag.startX) * sensitivity));
@@ -227,5 +276,7 @@
   }
   $("top-view").addEventListener("click", () => setView(false));
   $("angled-view").addEventListener("click", () => setView(true));
+  rotateRing(rotation.valueAsNumber);
+  showProtractor();
   setTime(540);
 })();

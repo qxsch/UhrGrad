@@ -113,6 +113,7 @@
 
   const hourSelect = $("hour"), minuteSelect = $("minute");
   const answers = $("show-answers"), protractor = $("show-protractor"), rotation = $("ring-rotation");
+  let clockMode = "realistic";
   const ticks = [];
   for (let deg = 0; deg < 360; deg++) {
     const length = deg % 10 === 0 ? 10 : deg % 5 === 0 ? 7 : 4;
@@ -141,12 +142,23 @@
   protractor.addEventListener("change", showProtractor);
   for (let h = 0; h < 24; h++) hourSelect.add(new Option(pad(h), h));
   for (let m = 0; m < 60; m++) minuteSelect.add(new Option(pad(m), m));
+  function degreesForTime(value) {
+    const [h, m] = timeParts(value);
+    return {
+      hour: (h % 12) * 30 + (clockMode === "realistic" ? m / 2 : 0),
+      minute: m * 6
+    };
+  }
+  function presetMarkup(value) {
+    const { hour: hourDegrees, minute: minuteDegrees } = degreesForTime(value);
+    const line = (r, deg) => `M0,0 L${polar(r, deg)}`;
+    return `<svg class="icon" aria-hidden="true" viewBox="-12 -12 24 24"><circle r="9.5"/><path d="${line(4.7, hourDegrees)} ${line(7.5, minuteDegrees)}"/></svg>${formatTime(value)}`;
+  }
   const presets = [540, 210, 360, 610].map(t => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "preset";
-    const line = (r, deg) => `M0,0 L${polar(r, deg)}`;
-    btn.innerHTML = `<svg class="icon" aria-hidden="true" viewBox="-12 -12 24 24"><circle r="9.5"/><path d="${line(4.7, t / 2)} ${line(7.5, t * 6)}"/></svg>${formatTime(t)}`;
+    btn.innerHTML = presetMarkup(t);
     btn.addEventListener("click", () => setTime(t));
     $("presets").append(btn);
     return { t, btn };
@@ -168,13 +180,14 @@
       ? ` Hour to minute: ${cw} degrees clockwise, ${ccw} degrees counterclockwise.` : ""));
   }
   answers.addEventListener("change", renderAnswers);
-  function setTime(value) {
+  function setTime(value, force = false) {
     const next = mod(Math.round(value), 24 * 60);
-    if (next === time) return;
+    if (!force && next === time) return;
     time = next;
     const [h, m] = timeParts(time);
-    hour.degrees = (h % 12) * 30 + m / 2;
-    minute.degrees = m * 6;
+    const degrees = degreesForTime(time);
+    hour.degrees = degrees.hour;
+    minute.degrees = degrees.minute;
     hour.hand.rotation.z = -hour.degrees * rad;
     minute.hand.rotation.z = -minute.degrees * rad;
     renderer.render(scene, camera);
@@ -188,6 +201,19 @@
   }
   for (const control of [hourSelect, minuteSelect])
     control.addEventListener("change", () => setTime(Number(hourSelect.value) * 60 + Number(minuteSelect.value)));
+  function setClockMode(mode) {
+    if (drag) endDrag({ pointerId: drag.id });
+    clockMode = mode;
+    $("realistic-mode").setAttribute("aria-pressed", mode === "realistic");
+    $("school-mode").setAttribute("aria-pressed", mode === "school");
+    $("mode-description").textContent = mode === "realistic"
+      ? "The hour hand advances continuously as the minutes pass."
+      : "The hands move independently, and the hour hand stays on the current hour.";
+    for (const { t, btn } of presets) btn.innerHTML = presetMarkup(t);
+    setTime(time, true);
+  }
+  $("realistic-mode").addEventListener("click", () => setClockMode("realistic"));
+  $("school-mode").addEventListener("click", () => setClockMode("school"));
 
   function localPoint(e, z) {
     const box = dial.getBoundingClientRect();
@@ -221,10 +247,17 @@
     const p = localPoint(e, 0), ring = onRing(p), hand = handAt(e);
     if (!ring && !hand && !angled) return;
     e.preventDefault();
+    const pTime = timeParts(time);
     drag = ring
       ? { id: e.pointerId, ring: true, offset: rotation.valueAsNumber - p.angle }
       : hand
-      ? { id: e.pointerId, hand, previous: localPoint(e, hand.hand.position.z).angle, time }
+      ? {
+          id: e.pointerId,
+          hand,
+          previous: localPoint(e, hand.hand.position.z).angle,
+          time,
+          value: hand === hour ? pTime[0] : pTime[1]
+        }
       : { id: e.pointerId, startX: e.clientX, startY: e.clientY, pitch, yaw };
     dial.setPointerCapture(e.pointerId);
     dial.style.cursor = "grabbing";
@@ -249,8 +282,18 @@
     if (drag.previous !== null) {
       // Unwrap successive samples so crossing twelve advances or rewinds the hour.
       const delta = mod(p.angle - drag.previous + 180, 360) - 180;
-      drag.time += delta * (drag.hand === hour ? 2 : 1 / 6);
-      setTime(drag.time);
+      if (clockMode === "realistic") {
+        drag.time += delta * (drag.hand === hour ? 2 : 1 / 6);
+        setTime(drag.time);
+      } else if (drag.hand === hour) {
+        drag.value += delta / 30;
+        const [, minutes] = timeParts(time);
+        setTime(mod(Math.round(drag.value), 24) * 60 + minutes);
+      } else {
+        drag.value += delta / 6;
+        const [hours] = timeParts(time);
+        setTime(hours * 60 + mod(Math.round(drag.value), 60));
+      }
     }
     drag.previous = p.angle;
   });

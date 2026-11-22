@@ -17,9 +17,7 @@
   </div></div>
   <main class="wrap">
     <header>
-      <div class="tag eyebrow">Study 01 / Time &amp; rotation</div>
       <h1>Clock angle explorer</h1>
-      <p>Move the hands or choose a time to measure the angle in both directions.</p>
     </header>
     <div class="workspace">
       <section class="card" aria-label="Analogue clock and measured angles">
@@ -78,6 +76,11 @@
         <section class="card controls" aria-labelledby="control-title">
           <h2 id="control-title">Set the time</h2>
           <p class="sub">Choose a time in 24-hour format (00:00–23:59).</p>
+          <div class="clock-mode" role="group" aria-label="Clock hand behavior">
+            <button type="button" id="realistic-mode" aria-pressed="true">Realistic clock</button>
+            <button type="button" id="school-mode" aria-pressed="false">School clock</button>
+          </div>
+          <p id="mode-description" class="mode-description">The hour hand advances continuously as the minutes pass.</p>
           <div class="fields">
             <label><span class="tag">Hour</span><select id="hour"></select></label><span class="colon" aria-hidden="true">:</span>
             <label><span class="tag">Minute</span><select id="minute"></select></label>

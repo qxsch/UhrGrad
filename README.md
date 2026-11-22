@@ -9,6 +9,7 @@ Open [index.html](./index.html) in a browser. Keep the other project files along
 ## Use the clock
 
 - **Set a time:** Drag either hand near its tip, choose an hour and minute from **00:00 to 23:59**, or select a preset. The dial uses a conventional 12-hour face.
+- **Choose a clock mode:** **Realistic clock** advances the hour hand continuously as the minutes pass. **School clock** moves each hand independently and snaps the hour hand to the selected hour, even at 14:59.
 - **Change the view:** **Default** looks straight down at the dial. In **3D**, drag an empty part of the face to rotate the clock without changing the time.
 - **Measure by hand:** Under **Measurement tools**, turn off **Show angle arrows and values** and turn on **Full-circle protractor (360°)**. Rotate the marked rim until its zero line meets the hour hand. At the minute hand’s dotted guide, read the outer scale clockwise or the inner scale counterclockwise. For precise alignment, focus the fine-rotation slider and use the arrow keys for 0.5° steps.
 - **Check your answer:** Turn the arrows and values back on. The two readings always add up to 360°; at noon and midnight, the clock uses 0° clockwise and 360° counterclockwise.
